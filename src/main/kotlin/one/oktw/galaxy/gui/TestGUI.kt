@@ -16,17 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package one.oktw.galaxy.command
+package one.oktw.galaxy.gui
 
-import one.oktw.galaxy.command.commands.Admin
-import one.oktw.galaxy.command.commands.Join
-import one.oktw.galaxy.command.commands.Test
+import net.minecraft.container.Container
+import net.minecraft.container.GenericContainer
+import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.entity.player.PlayerInventory
+import net.minecraft.text.LiteralText
+import one.oktw.galaxy.gui.inventory.ReadOnlyInventory
 
-class CommandRegister {
+class TestGUI : GUI(LiteralText("Test")) {
+    private val inventory = ReadOnlyInventory(9 * 6)
+
     init {
-//        CommandHelper.register(Spawn())
-        CommandHelper.register(Join())
-        CommandHelper.register(Admin())
-        CommandHelper.register(Test())
+        inventory
+    }
+
+    override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): Container {
+        return GenericContainer.createGeneric9x6(syncId, playerInventory, inventory)
     }
 }

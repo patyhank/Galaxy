@@ -16,17 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package one.oktw.galaxy.command
+package one.oktw.galaxy.gui.inventory
 
-import one.oktw.galaxy.command.commands.Admin
-import one.oktw.galaxy.command.commands.Join
-import one.oktw.galaxy.command.commands.Test
+import net.minecraft.inventory.BasicInventory
+import net.minecraft.item.ItemStack
 
-class CommandRegister {
-    init {
-//        CommandHelper.register(Spawn())
-        CommandHelper.register(Join())
-        CommandHelper.register(Admin())
-        CommandHelper.register(Test())
-    }
+class ReadOnlyInventory(size: Int) : BasicInventory(size) {
+    override fun isValidInvStack(int_1: Int, itemStack_1: ItemStack?) = false
 }

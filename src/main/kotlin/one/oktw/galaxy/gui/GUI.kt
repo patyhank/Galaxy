@@ -16,17 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package one.oktw.galaxy.command
+package one.oktw.galaxy.gui
 
-import one.oktw.galaxy.command.commands.Admin
-import one.oktw.galaxy.command.commands.Join
-import one.oktw.galaxy.command.commands.Test
+import net.minecraft.container.NameableContainerProvider
+import net.minecraft.text.Text
 
-class CommandRegister {
-    init {
-//        CommandHelper.register(Spawn())
-        CommandHelper.register(Join())
-        CommandHelper.register(Admin())
-        CommandHelper.register(Test())
-    }
+abstract class GUI(private val title: Text) : NameableContainerProvider {
+    override fun getDisplayName() = title
 }
