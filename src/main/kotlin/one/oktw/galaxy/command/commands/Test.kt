@@ -28,7 +28,7 @@ import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import one.oktw.galaxy.command.Command
-import one.oktw.galaxy.gui.TestGUI
+import one.oktw.galaxy.gui.TestContainer
 import java.util.concurrent.ConcurrentHashMap
 
 class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + SupervisorJob()) {
@@ -44,7 +44,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
     }
 
     private fun execute(source: ServerCommandSource, collection: Collection<GameProfile>): Int {
-        source.player.openContainer(TestGUI())
+        source.player.openContainer(TestContainer())
 
         return com.mojang.brigadier.Command.SINGLE_SUCCESS
     }
