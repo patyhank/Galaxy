@@ -18,15 +18,16 @@
 
 package one.oktw.galaxy.gui
 
-import net.minecraft.container.Container
 import net.minecraft.container.ContainerType
+import net.minecraft.container.GenericContainer
 import net.minecraft.container.SlotActionType
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.entity.player.PlayerInventory
+import net.minecraft.inventory.BasicInventory
 import net.minecraft.item.ItemStack
 
-class TestContainer : Container(ContainerType.GENERIC_9X6, 9 * 6) {
-    override fun canUse(player: PlayerEntity) = true
-
+class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
+    GenericContainer(ContainerType.GENERIC_9X6, 9 * 6, playerInventory, BasicInventory(9 * 6), syncId) {
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack {
         return ItemStack.EMPTY
     }
