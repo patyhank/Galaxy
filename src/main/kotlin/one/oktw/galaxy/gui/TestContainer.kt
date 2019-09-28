@@ -27,7 +27,7 @@ import net.minecraft.inventory.BasicInventory
 import net.minecraft.item.ItemStack
 
 class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
-    GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 9 * 6) {
+    GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack {
         return ItemStack.EMPTY
     }
