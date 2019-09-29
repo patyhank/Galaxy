@@ -18,7 +18,6 @@
 
 package one.oktw.galaxy.mixin.tweak;
 
-import net.minecraft.client.network.packet.InventoryS2CPacket;
 import net.minecraft.network.Packet;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -37,8 +36,13 @@ public abstract class MixinGUI_ServerPlayNetworkHandler {
     @Shadow
     public abstract void sendPacket(Packet<?> packet_1);
 
+    @Inject(method = "onClickWindow", at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
+    private void updatedContainer(ClickWindowC2SPacket packet, CallbackInfo ci) {
+        System.out.println("[DEBUG] Update Container");
+    }
+
     @Inject(method = "onClickWindow", at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
-    private void onClickWindow(ClickWindowC2SPacket packet, CallbackInfo ci) {
-        sendPacket(new InventoryS2CPacket(packet.getSyncId(), player.container.getStacks()));
+    private void syncContainer(ClickWindowC2SPacket packet, CallbackInfo ci) {
+        System.out.println("[DEBUG] Sync Container");
     }
 }
