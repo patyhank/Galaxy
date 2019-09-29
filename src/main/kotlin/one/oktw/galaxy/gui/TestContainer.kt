@@ -25,10 +25,12 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.BasicInventory
 import net.minecraft.item.ItemStack
+import net.minecraft.server.network.ServerPlayerEntity
 
 class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack {
+        player.server?.executeFuture { if (player.container === this) (player as ServerPlayerEntity).onContainerRegistered(this, stacks) }
         return ItemStack.EMPTY
     }
 }
