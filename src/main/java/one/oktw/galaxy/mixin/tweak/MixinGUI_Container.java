@@ -18,23 +18,25 @@
 
 package one.oktw.galaxy.mixin.tweak;
 
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.network.packet.ClickWindowC2SPacket;
+import net.minecraft.container.Container;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.DefaultedList;
 import one.oktw.galaxy.container.ContainerForceUpdate;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ServerPlayNetworkHandler.class)
-public class MixinGUI_ServerPlayNetworkHandler {
+@Mixin(Container.class)
+public abstract class MixinGUI_Container implements ContainerForceUpdate {
     @Shadow
-    public ServerPlayerEntity player;
+    @Final
+    private DefaultedList<ItemStack> stackList;
 
-    @Inject(method = "onClickWindow", at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V"))
-    private void onClickWindow(ClickWindowC2SPacket packet, CallbackInfo ci) {
-        ((ContainerForceUpdate) player.container).forceUpdateSlot(packet.getSlot());
+    @Shadow
+    public abstract void sendContentUpdates();
+
+    public void forceUpdateSlot(int slot) {
+        stackList.set(slot, ItemStack.EMPTY);
+        sendContentUpdates();
     }
 }
