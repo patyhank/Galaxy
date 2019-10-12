@@ -18,7 +18,6 @@
 
 package one.oktw.galaxy.command.commands
 
-import com.mojang.authlib.GameProfile
 import com.mojang.brigadier.CommandDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,12 +43,12 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
         dispatcher.register(
             CommandManager.literal("test")
                 .executes { context ->
-                    execute(context.source, listOf(context.source.player.gameProfile))
+                    execute(context.source)
                 }
         )
     }
 
-    private fun execute(source: ServerCommandSource, collection: Collection<GameProfile>): Int {
+    private fun execute(source: ServerCommandSource): Int {
         source.player.openContainer(object : NameableContainerProvider {
             override fun createMenu(syncId: Int, playerInventory: PlayerInventory, var3: PlayerEntity): Container? {
                 return TestContainer(playerInventory, syncId)

@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinGUI_ServerPlayNetworkHandler",
+    "MixinItemStackEqualAllowNull_ItemStack",
     "MixinRCON_RconClient",
     "MixinPreGenSpawn_MinecraftServer"
   ],
