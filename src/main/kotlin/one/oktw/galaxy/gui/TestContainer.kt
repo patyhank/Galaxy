@@ -29,7 +29,7 @@ import net.minecraft.item.ItemStack
 class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
-        if (slot <= 54) return null
+        if (slot < 54) return null
 
         return super.onSlotClick(slot, button, action, player)
     }
