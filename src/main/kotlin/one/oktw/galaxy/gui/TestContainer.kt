@@ -21,6 +21,7 @@ package one.oktw.galaxy.gui
 import net.minecraft.container.ContainerType
 import net.minecraft.container.GenericContainer
 import net.minecraft.container.SlotActionType
+import net.minecraft.container.SlotActionType.*
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.BasicInventory
@@ -29,10 +30,51 @@ import net.minecraft.item.ItemStack
 class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
-        println("slot: $slot, action: $action")
+        println("slot: $slot, button: $button, action: $action")
 
-        if (slot < 54) return null
+        if (slot < 54 && slot != -999) return null
 
-        return super.onSlotClick(slot, button, action, player)
+        return when (action) {
+            PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
+            QUICK_MOVE -> null
+            PICKUP_ALL -> { // Rewrite PICKUP_ALL only take from player inventory
+                if (slot < 0) return null
+
+                val cursorItemStack = player.inventory.cursorStack
+                val clickSlot = this.slotList[slot]
+                if (!cursorItemStack.isEmpty && (!clickSlot.hasStack() || !clickSlot.canTakeItems(player))) {
+                    var index = rows * 9 - 1
+                    val step = if (button == 0) 1 else -1
+
+                    for (tryTime in 0..1) {
+                        while (index >= rows * 9 - 1 && index < this.slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
+                            val scanSlot = this.slotList[index]
+                            if (scanSlot.hasStack()
+                                && canInsertItemIntoSlot(scanSlot, cursorItemStack, true)
+                                && scanSlot.canTakeItems(player)
+                                && this.canInsertIntoSlot(cursorItemStack, scanSlot)
+                            ) {
+                                val selectItemStack = scanSlot.stack
+                                if (tryTime != 0 || selectItemStack.count != selectItemStack.maxCount) {
+                                    val takeCount = (cursorItemStack.maxCount - cursorItemStack.count).coerceAtMost(selectItemStack.count)
+                                    val selectItemStack2 = scanSlot.takeStack(takeCount)
+                                    cursorItemStack.increment(takeCount)
+                                    if (selectItemStack2.isEmpty) {
+                                        scanSlot.stack = ItemStack.EMPTY
+                                    }
+
+                                    scanSlot.onTakeItem(player, selectItemStack2)
+                                }
+                            }
+                            index += step
+                        }
+                    }
+                }
+
+                this.sendContentUpdates()
+
+                cursorItemStack
+            }
+        }
     }
 }
