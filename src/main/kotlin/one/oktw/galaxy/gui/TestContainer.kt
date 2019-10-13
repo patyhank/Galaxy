@@ -35,6 +35,8 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
         private val PLAYER_HOT_BAR_RANGE = PLAYER_INVENTORY_RANGE.last + 1..PLAYER_INVENTORY_RANGE.last + 1 + 9
     }
 
+    private var allowSlotIndex = intArrayOf()
+
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
         println("slot: $slot, button: $button, action: $action")
 
@@ -46,7 +48,7 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
         return when (action) {
             PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
             QUICK_MOVE -> {
-                if (slot in 0 until GUI_SLOT_COUNT) return null
+                if (slot in 0 until GUI_SLOT_COUNT && slot !in allowSlotIndex) return null
 
                 var itemStack = ItemStack.EMPTY
                 val inventorySlot = slotList[slot]
