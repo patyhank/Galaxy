@@ -31,7 +31,7 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
     companion object {
         private const val GUI_SLOT_COUNT = 6 * 9
-        private val PLAYER_INVENTORY_RANGE = GUI_SLOT_COUNT..GUI_SLOT_COUNT + 3 * 9
+        private val PLAYER_INVENTORY_RANGE = GUI_SLOT_COUNT until GUI_SLOT_COUNT + 3 * 9
         private val PLAYER_HOT_BAR_RANGE = PLAYER_INVENTORY_RANGE.last + 1..PLAYER_INVENTORY_RANGE.last + 1 + 9
     }
 
