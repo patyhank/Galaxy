@@ -41,18 +41,19 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
                 if (slot < 0) return null
 
                 val cursorItemStack = player.inventory.cursorStack
-                val clickSlot = this.slotList[slot]
+                val clickSlot = slotList[slot]
                 if (!cursorItemStack.isEmpty && (!clickSlot.hasStack() || !clickSlot.canTakeItems(player))) {
-                    var index = rows * 9 - 1
+                    val start = inventory.invSize - 1 // Skip GUI inventory
                     val step = if (button == 0) 1 else -1
 
                     for (tryTime in 0..1) {
-                        while (index >= rows * 9 - 1 && index < this.slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
-                            val scanSlot = this.slotList[index]
+                        var index = start
+                        while (index >= start && index < slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
+                            val scanSlot = slotList[index]
                             if (scanSlot.hasStack()
                                 && canInsertItemIntoSlot(scanSlot, cursorItemStack, true)
                                 && scanSlot.canTakeItems(player)
-                                && this.canInsertIntoSlot(cursorItemStack, scanSlot)
+                                && canInsertIntoSlot(cursorItemStack, scanSlot)
                             ) {
                                 val selectItemStack = scanSlot.stack
                                 if (tryTime != 0 || selectItemStack.count != selectItemStack.maxCount) {
