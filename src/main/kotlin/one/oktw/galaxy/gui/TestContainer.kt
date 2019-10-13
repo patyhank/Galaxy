@@ -29,9 +29,12 @@ import net.minecraft.item.ItemStack
 
 class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
-    private val guiItemCount = 6 * 9
-    private val playerInventoryRange = guiItemCount..guiItemCount + 3 * 9
-    private val playerHotBarRange = playerInventoryRange.last..playerInventoryRange.last + 9
+    companion object {
+        private const val GUI_SLOT_COUNT = 6 * 9
+        private val playerInventoryRange = GUI_SLOT_COUNT..GUI_SLOT_COUNT + 3 * 9
+        private val playerHotBarRange = playerInventoryRange.last + 1..playerInventoryRange.last + 1 + 9
+    }
+
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
         println("slot: $slot, button: $button, action: $action")
 
@@ -40,7 +43,7 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
         return when (action) {
             PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
             QUICK_MOVE -> {
-                if (slot in 0 until guiItemCount) return null
+                if (slot in 0 until GUI_SLOT_COUNT) return null
 
                 var itemStack = ItemStack.EMPTY
                 val inventorySlot = slotList[slot]
@@ -74,8 +77,8 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
                     val step = if (button == 0) 1 else -1
 
                     for (tryTime in 0..1) {
-                        var index = guiItemCount
-                        while (index >= guiItemCount && index < slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
+                        var index = GUI_SLOT_COUNT
+                        while (index >= GUI_SLOT_COUNT && index < slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
                             val scanSlot = slotList[index]
                             if (scanSlot.hasStack()
                                 && canInsertItemIntoSlot(scanSlot, cursorItemStack, true)
