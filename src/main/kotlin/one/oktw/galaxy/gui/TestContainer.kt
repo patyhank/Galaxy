@@ -31,14 +31,17 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
     companion object {
         private const val GUI_SLOT_COUNT = 6 * 9
-        private val playerInventoryRange = GUI_SLOT_COUNT..GUI_SLOT_COUNT + 3 * 9
-        private val playerHotBarRange = playerInventoryRange.last + 1..playerInventoryRange.last + 1 + 9
+        private val PLAYER_INVENTORY_RANGE = GUI_SLOT_COUNT..GUI_SLOT_COUNT + 3 * 9
+        private val PLAYER_HOT_BAR_RANGE = PLAYER_INVENTORY_RANGE.last + 1..PLAYER_INVENTORY_RANGE.last + 1 + 9
     }
 
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
         println("slot: $slot, button: $button, action: $action")
 
-        if (slot < 54 && slot != -999) return null
+        if (slot < 54 && slot != -999 && slot !in allowSlotIndex) {
+            if (action == QUICK_CRAFT) endQuickCraft()
+            return null
+        }
 
         return when (action) {
             PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
@@ -52,10 +55,10 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
                     val slotItemStack = inventorySlot.stack
                     itemStack = slotItemStack.copy()
 
-                    if (slot in playerInventoryRange) {
-                        if (!insertItem(slotItemStack, playerHotBarRange.first, playerHotBarRange.last, false)) return ItemStack.EMPTY
-                    } else if (slot in playerHotBarRange) {
-                        if (!insertItem(slotItemStack, playerInventoryRange.first, playerInventoryRange.last, false)) return ItemStack.EMPTY
+                    if (slot in PLAYER_INVENTORY_RANGE) {
+                        if (!insertItem(slotItemStack, PLAYER_HOT_BAR_RANGE.first, PLAYER_HOT_BAR_RANGE.last, false)) return ItemStack.EMPTY
+                    } else if (slot in PLAYER_HOT_BAR_RANGE) {
+                        if (!insertItem(slotItemStack, PLAYER_INVENTORY_RANGE.first, PLAYER_INVENTORY_RANGE.last, false)) return ItemStack.EMPTY
                     }
 
                     // clean up empty slot
