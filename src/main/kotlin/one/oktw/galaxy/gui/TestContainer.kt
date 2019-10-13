@@ -29,6 +29,9 @@ import net.minecraft.item.ItemStack
 
 class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
     GenericContainer(ContainerType.GENERIC_9X6, syncId, playerInventory, BasicInventory(9 * 6), 6) {
+    private val guiItemCount = 6 * 9
+    private val playerInventoryRange = guiItemCount..guiItemCount + 3 * 9
+    private val playerHotBarRange = playerInventoryRange.last..playerInventoryRange.last + 9
     override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
         println("slot: $slot, button: $button, action: $action")
 
@@ -36,19 +39,43 @@ class TestContainer(playerInventory: PlayerInventory, syncId: Int) :
 
         return when (action) {
             PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
-            QUICK_MOVE -> null
+            QUICK_MOVE -> {
+                if (slot in 0 until guiItemCount) return null
+
+                var itemStack = ItemStack.EMPTY
+                val inventorySlot = slotList[slot]
+
+                if (inventorySlot != null && inventorySlot.hasStack()) {
+                    val slotItemStack = inventorySlot.stack
+                    itemStack = slotItemStack.copy()
+
+                    if (slot in playerInventoryRange) {
+                        if (!insertItem(slotItemStack, playerHotBarRange.first, playerHotBarRange.last, false)) return ItemStack.EMPTY
+                    } else if (slot in playerHotBarRange) {
+                        if (!insertItem(slotItemStack, playerInventoryRange.first, playerInventoryRange.last, false)) return ItemStack.EMPTY
+                    }
+
+                    // clean up empty slot
+                    if (slotItemStack.isEmpty) {
+                        inventorySlot.stack = ItemStack.EMPTY
+                    } else {
+                        inventorySlot.markDirty()
+                    }
+                }
+
+                return itemStack
+            }
             PICKUP_ALL -> { // Rewrite PICKUP_ALL only take from player inventory
                 if (slot < 0) return null
 
                 val cursorItemStack = player.inventory.cursorStack
                 val clickSlot = slotList[slot]
                 if (!cursorItemStack.isEmpty && (!clickSlot.hasStack() || !clickSlot.canTakeItems(player))) {
-                    val start = inventory.invSize - 1 // Skip GUI inventory
                     val step = if (button == 0) 1 else -1
 
                     for (tryTime in 0..1) {
-                        var index = start
-                        while (index >= start && index < slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
+                        var index = guiItemCount
+                        while (index >= guiItemCount && index < slotList.size && cursorItemStack.count < cursorItemStack.maxCount) {
                             val scanSlot = slotList[index]
                             if (scanSlot.hasStack()
                                 && canInsertItemIntoSlot(scanSlot, cursorItemStack, true)
