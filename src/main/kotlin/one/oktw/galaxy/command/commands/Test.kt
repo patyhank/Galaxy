@@ -44,7 +44,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
     }
 
     private fun execute(source: ServerCommandSource): Int {
-        val gui = GUI.Builder(ContainerType.GENERIC_3X3).build()
+        val gui = GUI.Builder(ContainerType.GENERIC_9X1).build()
 
         source.player.openContainer(gui)
 
