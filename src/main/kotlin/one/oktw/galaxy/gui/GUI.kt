@@ -45,8 +45,13 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
 
     override fun getDisplayName() = title
 
-    override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): Container {
-        return GenericContainer(syncId, playerInventory)
+    override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): Container? {
+        return when (type) {
+            in genericContainerType -> GenericContainer(syncId, playerInventory)
+            GENERIC_3X3 -> Generic3x3Container(syncId, playerInventory)
+            HOPPER -> HopperContainer(syncId, playerInventory)
+            else -> null
+        }
     }
 
     fun addBinding(index: Int, function: (GUI, ItemStack) -> Any) {
