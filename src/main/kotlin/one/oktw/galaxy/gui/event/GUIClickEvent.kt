@@ -16,11 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package one.oktw.galaxy.gui.inventory
+package one.oktw.galaxy.gui.event
 
-import net.minecraft.inventory.BasicInventory
+import net.minecraft.container.SlotActionType
 import net.minecraft.item.ItemStack
 
-class ReadOnlyInventory(size: Int) : BasicInventory(size) {
-    override fun isValidInvStack(int_1: Int, itemStack_1: ItemStack?) = false
-}
+data class GUIClickEvent(val x: Int, val y: Int, val action: SlotActionType, val item: ItemStack, var cancel: Boolean = false)

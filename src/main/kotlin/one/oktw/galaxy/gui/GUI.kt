@@ -27,17 +27,16 @@ import net.minecraft.container.SlotActionType.*
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.BasicInventory
-import net.minecraft.inventory.Inventory
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Text
+import one.oktw.galaxy.gui.event.GUIClickEvent
+import one.oktw.galaxy.gui.utils.InventoryEditor
+import one.oktw.galaxy.gui.utils.InventoryUtils
+import one.oktw.galaxy.gui.utils.InventoryUtils.Companion.genericContainerType
 import java.util.concurrent.ConcurrentHashMap
 
 class GUI(private val type: ContainerType<out Container>, private val title: Text) : NameableContainerProvider {
-    companion object {
-        private val genericContainerType = listOf(GENERIC_9X1, GENERIC_9X2, GENERIC_9X3, GENERIC_9X4, GENERIC_9X5, GENERIC_9X6)
-    }
-
-    private val inventory: Inventory = when (type) {
+    private val inventory = when (type) {
         GENERIC_9X1 -> BasicInventory(9)
         GENERIC_9X2 -> BasicInventory(9 * 2)
         GENERIC_9X3 -> BasicInventory(9 * 3)
@@ -50,8 +49,9 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
     }
     private val playerInventoryRange = inventory.invSize until inventory.invSize + 3 * 9
     private val playerHotBarRange = playerInventoryRange.last + 1..playerInventoryRange.last + 1 + 9
-    private val bindings = ConcurrentHashMap<Int, (GUI, ItemStack) -> Any>()
-    private val rangeBindings = ConcurrentHashMap<Pair<IntRange, IntRange>, (GUI, ItemStack) -> Any>()
+    private val bindings = ConcurrentHashMap<Int, GUIClickEvent.() -> Any>()
+    private val rangeBindings = ConcurrentHashMap<Pair<IntRange, IntRange>, GUIClickEvent.() -> Any>()
+    private val inventoryUtils = InventoryUtils(type)
     private var allowUseSlot = HashSet<Int>()
 
     override fun getDisplayName() = title
@@ -74,22 +74,26 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
     fun setAllowUse(x: Int, y: Int, canUse: Boolean) {
         if (!checkRange(x, y)) throw IndexOutOfBoundsException("Allow use index out of inventory range")
 
-        if (canUse) allowUseSlot.add(xyToIndex(x, y)) else allowUseSlot.remove(xyToIndex(x, y))
+        if (canUse) allowUseSlot.add(inventoryUtils.xyToIndex(x, y)) else allowUseSlot.remove(inventoryUtils.xyToIndex(x, y))
     }
 
-    fun addBinding(index: Int, function: (GUI, ItemStack) -> Any) {
+    fun isAllowUse(index: Int) = allowUseSlot.contains(index)
+
+    fun isAllowUse(x: Int, y: Int) = isAllowUse(inventoryUtils.xyToIndex(x, y))
+
+    fun addBinding(index: Int, function: GUIClickEvent.() -> Any) {
         if (index !in 0 until inventory.invSize) throw IndexOutOfBoundsException("Binding index out of inventory range")
 
         bindings[index] = function
     }
 
-    fun addBinding(x: Int, y: Int, function: (GUI, ItemStack) -> Any) {
+    fun addBinding(x: Int, y: Int, function: GUIClickEvent.() -> Any) {
         if (!checkRange(x, y)) throw IndexOutOfBoundsException("Binding index out of inventory range")
 
         bindings[x * y] = function
     }
 
-    fun addBinding(xRange: IntRange, yRange: IntRange, function: (GUI, ItemStack) -> Any) {
+    fun addBinding(xRange: IntRange, yRange: IntRange, function: GUIClickEvent.() -> Any) {
         if (!checkRange(xRange.first, yRange.first) || !checkRange(xRange.last, yRange.last)) {
             throw IndexOutOfBoundsException("Binding index out of inventory range")
         }
@@ -98,55 +102,22 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
     }
 
     fun editInventory(block: InventoryEditor.() -> Unit) {
-        block.invoke(InventoryEditor(inventory))
+        block.invoke(InventoryEditor(type, inventory))
         inventory.markDirty()
     }
 
-    private fun xyToIndex(x: Int, y: Int): Int {
-        return when (type) {
-            in genericContainerType -> y * 9 + x
-            GENERIC_3X3 -> y * 3 + x
-            HOPPER -> x
-            else -> throw IllegalArgumentException("Unsupported container type: $type")
-        }
-    }
+    private fun checkRange(x: Int, y: Int) = inventoryUtils.xyToIndex(x, y) in 0 until inventory.invSize
 
-    private fun indexToXY(index: Int): Pair<Int, Int> {
-        if (index !in 0 until inventory.invSize) throw IndexOutOfBoundsException(index)
-
-        return when (type) {
-            in genericContainerType -> Pair(index % 9, index / 9)
-            GENERIC_3X3 -> Pair(index % 3, index / 3)
-            HOPPER -> Pair(index, 0)
-            else -> throw IllegalArgumentException("Unsupported container type: $type")
-        }
-    }
-
-    class InventoryEditor(private val inventory: Inventory) {
-        fun set(index: Int, item: ItemStack) {
-            inventory.setInvStack(index, item)
-        }
-
-        fun fill(xRange: IntRange, yRange: IntRange, item: ItemStack) {
-            // TODO
-            inventory.markDirty()
-        }
-    }
-
-    private fun checkRange(x: Int, y: Int) = xyToIndex(x, y) in 0 until inventory.invSize
-
+    // Vanilla container hack
     private inner class GenericContainer(syncId: Int, playerInventory: PlayerInventory) :
         net.minecraft.container.GenericContainer(type, syncId, playerInventory, inventory, inventory.invSize / 9) {
-
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
             // Trigger binding TODO allow binding cancel player change
             if (slot in 0 until inventory.invSize) {
-                bindings[slot]?.invoke(this@GUI, inventory.getInvStack(slot).copy())
-
-                indexToXY(slot).let { (x, y) ->
-                    rangeBindings.filterKeys { (xRange, yRange) -> x in xRange && y in yRange }.values.forEach {
-                        it.invoke(this@GUI, inventory.getInvStack(slot).copy())
-                    }
+                inventoryUtils.indexToXY(slot).let { (x, y) ->
+                    bindings[slot]?.invoke(GUIClickEvent(x, y, action, inventory.getInvStack(slot)))
+                    rangeBindings.filterKeys { (xRange, yRange) -> x in xRange && y in yRange }.values
+                        .forEach { it.invoke(GUIClickEvent(x, y, action, inventory.getInvStack(slot))) }
                 }
             }
 
@@ -230,6 +201,16 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
     private inner class Generic3x3Container(syncId: Int, playerInventory: PlayerInventory) :
         net.minecraft.container.Generic3x3Container(syncId, playerInventory, inventory) {
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
+            // Trigger binding TODO allow binding cancel player change
+            if (slot in 0 until inventory.invSize) {
+                inventoryUtils.indexToXY(slot).let { (x, y) ->
+                    bindings[slot]?.invoke(GUIClickEvent(x, y, action, inventory.getInvStack(slot)))
+                    rangeBindings.filterKeys { (xRange, yRange) -> x in xRange && y in yRange }.values
+                        .forEach { it.invoke(GUIClickEvent(x, y, action, inventory.getInvStack(slot))) }
+                }
+            }
+
+            // Cancel player change inventory
             if (slot < inventory.invSize && slot != -999 && slot !in allowUseSlot) {
                 if (action == QUICK_CRAFT) endQuickCraft()
                 return null
@@ -247,6 +228,7 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
                         val slotItemStack = inventorySlot.stack
                         itemStack = slotItemStack.copy()
 
+                        // TODO move item to canUse slot
                         if (slot in playerInventoryRange) {
                             if (!insertItem(slotItemStack, playerHotBarRange.first, playerHotBarRange.last, false)) return ItemStack.EMPTY
                         } else if (slot in playerHotBarRange) {
@@ -263,7 +245,7 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
 
                     return itemStack
                 }
-                PICKUP_ALL -> { // Rewrite PICKUP_ALL only take from player inventory
+                PICKUP_ALL -> { // Rewrite PICKUP_ALL only take from player inventory. TODO move item from canUse slot
                     if (slot < 0) return null
 
                     val cursorItemStack = player.inventory.cursorStack
@@ -308,6 +290,16 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
     private inner class HopperContainer(syncId: Int, playerInventory: PlayerInventory) :
         net.minecraft.container.HopperContainer(syncId, playerInventory, inventory) {
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
+            // Trigger binding TODO allow binding cancel player change
+            if (slot in 0 until inventory.invSize) {
+                inventoryUtils.indexToXY(slot).let { (x, y) ->
+                    bindings[slot]?.invoke(GUIClickEvent(x, y, action, inventory.getInvStack(slot)))
+                    rangeBindings.filterKeys { (xRange, yRange) -> x in xRange && y in yRange }.values
+                        .forEach { it.invoke(GUIClickEvent(x, y, action, inventory.getInvStack(slot))) }
+                }
+            }
+
+            // Cancel player change inventory
             if (slot < inventory.invSize && slot != -999 && slot !in allowUseSlot) {
                 if (action == QUICK_CRAFT) endQuickCraft()
                 return null
@@ -325,6 +317,7 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
                         val slotItemStack = inventorySlot.stack
                         itemStack = slotItemStack.copy()
 
+                        // TODO move item to canUse slot
                         if (slot in playerInventoryRange) {
                             if (!insertItem(slotItemStack, playerHotBarRange.first, playerHotBarRange.last, false)) return ItemStack.EMPTY
                         } else if (slot in playerHotBarRange) {
@@ -341,7 +334,7 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
 
                     return itemStack
                 }
-                PICKUP_ALL -> { // Rewrite PICKUP_ALL only take from player inventory
+                PICKUP_ALL -> { // Rewrite PICKUP_ALL only take from player inventory. TODO move item from canUse slot
                     if (slot < 0) return null
 
                     val cursorItemStack = player.inventory.cursorStack
