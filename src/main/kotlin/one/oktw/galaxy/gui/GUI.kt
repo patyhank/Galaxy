@@ -128,12 +128,14 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
         net.minecraft.container.GenericContainer(type, syncId, playerInventory, inventory, inventory.invSize / 9) {
 
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
+            // Trigger binding
+            bindings[slot]?.invoke(this@GUI, inventory.getInvStack(slot))
+
+            // Cancel player change inventory
             if (slot < inventory.invSize && slot != -999 && slot !in allowUseSlot) {
                 if (action == QUICK_CRAFT) endQuickCraft()
                 return null
             }
-
-            bindings[slot]?.invoke(this@GUI, inventory.getInvStack(slot))
 
             return when (action) {
                 PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
