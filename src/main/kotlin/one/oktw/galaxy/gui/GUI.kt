@@ -133,6 +133,8 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
                 return null
             }
 
+            bindings[slot]?.invoke(this@GUI, inventory.getInvStack(slot))
+
             return when (action) {
                 PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
                 QUICK_MOVE -> {
