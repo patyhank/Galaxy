@@ -50,6 +50,12 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
     private fun execute(source: ServerCommandSource): Int {
         val gui = GUI(ContainerType.GENERIC_9X1, LiteralText("Test"))
 
+        gui.addBinding(1..8, 0..0) { _: GUI, item: ItemStack ->
+            LogManager.getLogger().info(item)
+            gui.editInventory {
+                set(1, ItemStack(Items.STICK))
+            }
+        }
         gui.addBinding(0) { _: GUI, item: ItemStack ->
             LogManager.getLogger().info(item)
             gui.editInventory {
