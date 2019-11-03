@@ -140,11 +140,13 @@ class GUI(private val type: ContainerType<out Container>, private val title: Tex
 
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
             // Trigger binding TODO allow binding cancel player change
-            bindings[slot]?.invoke(this@GUI, inventory.getInvStack(slot).copy())
+            if (slot in 0 until inventory.invSize) {
+                bindings[slot]?.invoke(this@GUI, inventory.getInvStack(slot).copy())
 
-            indexToXY(slot).let { (x, y) ->
-                rangeBindings.filterKeys { (xRange, yRange) -> x in xRange && y in yRange }.values.forEach {
-                    it.invoke(this@GUI, inventory.getInvStack(slot).copy())
+                indexToXY(slot).let { (x, y) ->
+                    rangeBindings.filterKeys { (xRange, yRange) -> x in xRange && y in yRange }.values.forEach {
+                        it.invoke(this@GUI, inventory.getInvStack(slot).copy())
+                    }
                 }
             }
 
