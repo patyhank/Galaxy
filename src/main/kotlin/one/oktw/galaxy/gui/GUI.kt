@@ -27,21 +27,32 @@ import net.minecraft.container.SlotActionType.*
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.BasicInventory
+import net.minecraft.inventory.Inventory
 import net.minecraft.item.ItemStack
-import net.minecraft.text.LiteralText
 import net.minecraft.text.Text
+import java.util.concurrent.ConcurrentHashMap
 
-class GUI private constructor(private val type: ContainerType<out Container>, size: Int, private val title: Text) : NameableContainerProvider {
+class GUI(private val type: ContainerType<out Container>, private val title: Text) : NameableContainerProvider {
     companion object {
         private val genericContainerType = listOf(GENERIC_9X1, GENERIC_9X2, GENERIC_9X3, GENERIC_9X4, GENERIC_9X5, GENERIC_9X6)
     }
 
-    private val inventory = BasicInventory(size)
+    private val inventory: Inventory = when (type) {
+        GENERIC_9X1 -> BasicInventory(9)
+        GENERIC_9X2 -> BasicInventory(9 * 2)
+        GENERIC_9X3 -> BasicInventory(9 * 3)
+        GENERIC_9X4 -> BasicInventory(9 * 4)
+        GENERIC_9X5 -> BasicInventory(9 * 5)
+        GENERIC_9X6 -> BasicInventory(9 * 6)
+        GENERIC_3X3 -> BasicInventory(9)
+        HOPPER -> BasicInventory(5)
+        else -> throw IllegalArgumentException("Unsupported container type: $type")
+    }
     private val playerInventoryRange = inventory.invSize until inventory.invSize + 3 * 9
     private val playerHotBarRange = playerInventoryRange.last + 1..playerInventoryRange.last + 1 + 9
-    private val functionBindings = HashMap<Int, (GUI, ItemStack) -> Any>()
-    private val rangeFunctionBindings = HashMap<Pair<IntRange, IntRange>, (GUI, ItemStack) -> Any>()
-    private var allowSlotIndex = intArrayOf()
+    private val bindings = ConcurrentHashMap<Int, (GUI, ItemStack) -> Any>()
+    private val rangeBindings = ConcurrentHashMap<Pair<IntRange, IntRange>, (GUI, ItemStack) -> Any>()
+    private var allowUseSlot = HashSet<Int>()
 
     override fun getDisplayName() = title
 
@@ -54,77 +65,70 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
         }
     }
 
+    fun setAllowUse(index: Int, canUse: Boolean) {
+        if (index !in 0 until inventory.invSize) throw IndexOutOfBoundsException("Allow use index out of inventory range")
+
+        if (canUse) allowUseSlot.add(index) else allowUseSlot.remove(index)
+    }
+
+    fun setAllowUse(x: Int, y: Int, canUse: Boolean) {
+        if (!checkRange(x, y)) throw IndexOutOfBoundsException("Allow use index out of inventory range")
+
+        if (canUse) allowUseSlot.add(xyToIndex(x, y)) else allowUseSlot.remove(xyToIndex(x, y))
+    }
+
     fun addBinding(index: Int, function: (GUI, ItemStack) -> Any) {
         if (index !in 0 until inventory.invSize) throw IndexOutOfBoundsException("Binding index out of inventory range")
 
-        functionBindings[index] = function
+        bindings[index] = function
     }
 
     fun addBinding(x: Int, y: Int, function: (GUI, ItemStack) -> Any) {
         if (!checkRange(x, y)) throw IndexOutOfBoundsException("Binding index out of inventory range")
 
-        functionBindings[x * y] = function
+        bindings[x * y] = function
     }
-
-    //
-    // Useless?
-    //
-//    fun addBinding(indexRange: IntRange, function: (GUI, ItemStack) -> Any) {
-//        if (indexRange.first < 0 || indexRange.last >= inventory.invSize) throw IndexOutOfBoundsException("Binding index out of inventory range")
-//
-//        rangeFunctionBindings[indexRange] = function
-//    }
 
     fun addBinding(xRange: IntRange, yRange: IntRange, function: (GUI, ItemStack) -> Any) {
-        if (!checkRange(xRange.first, yRange.first) || !checkRange(
-                xRange.last,
-                yRange.last
-            )
-        ) throw IndexOutOfBoundsException("Binding index out of inventory range")
+        if (!checkRange(xRange.first, yRange.first) || !checkRange(xRange.last, yRange.last)) {
+            throw IndexOutOfBoundsException("Binding index out of inventory range")
+        }
 
-        rangeFunctionBindings[Pair(xRange, yRange)] = function
+        rangeBindings[Pair(xRange, yRange)] = function
     }
 
-    private fun checkRange(x: Int, y: Int): Boolean {
+    fun editInventory(block: InventoryEditor.() -> Unit) {
+        block.invoke(InventoryEditor(inventory))
+        inventory.markDirty()
+    }
+
+    private fun xyToIndex(x: Int, y: Int): Int {
         return when (type) {
-            in genericContainerType -> x in 0..9 && y in 0..6
-            GENERIC_3X3 -> x in 0..3 && y in 0..3
-            HOPPER -> x in 0..5 && y in 0..1
-            else -> x * y in 0 until inventory.invSize
+            in genericContainerType -> y * 9 + x
+            GENERIC_3X3 -> y * 3 + x
+            HOPPER -> x
+            else -> throw IllegalArgumentException("Unsupported container type: $type")
         }
     }
 
-    open class Builder(private val type: ContainerType<out Container>) {
-        private var size: Int = 0
-        private var title: Text = LiteralText("")
-
-        init {
-            when (type) {
-                GENERIC_9X1 -> size = 9
-                GENERIC_9X2 -> size = 9 * 2
-                GENERIC_9X3 -> size = 9 * 3
-                GENERIC_9X4 -> size = 9 * 4
-                GENERIC_9X5 -> size = 9 * 5
-                GENERIC_9X6 -> size = 9 * 6
-                GENERIC_3X3 -> size = 9
-                HOPPER -> size = 5
-            }
+    class InventoryEditor(private val inventory: Inventory) {
+        fun set(index: Int, item: ItemStack) {
+            inventory.setInvStack(index, item)
         }
 
-        fun setTitle(title: Text) {
-            this.title = title
-        }
-
-        fun build(): GUI {
-            return GUI(type, size, title)
+        fun fill(xRange: IntRange, yRange: IntRange, item: ItemStack) {
+            // TODO
+            inventory.markDirty()
         }
     }
+
+    private fun checkRange(x: Int, y: Int) = xyToIndex(x, y) in 0 until inventory.invSize
 
     private inner class GenericContainer(syncId: Int, playerInventory: PlayerInventory) :
         net.minecraft.container.GenericContainer(type, syncId, playerInventory, inventory, inventory.invSize / 9) {
 
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
-            if (slot < inventory.invSize && slot != -999 && slot !in allowSlotIndex) {
+            if (slot < inventory.invSize && slot != -999 && slot !in allowUseSlot) {
                 if (action == QUICK_CRAFT) endQuickCraft()
                 return null
             }
@@ -132,7 +136,7 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
             return when (action) {
                 PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
                 QUICK_MOVE -> {
-                    if (slot in 0 until inventory.invSize && slot !in allowSlotIndex) return null
+                    if (slot in 0 until inventory.invSize && slot !in allowUseSlot) return null
 
                     var itemStack = ItemStack.EMPTY
                     val inventorySlot = slotList[slot]
@@ -202,7 +206,7 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
     private inner class Generic3x3Container(syncId: Int, playerInventory: PlayerInventory) :
         net.minecraft.container.Generic3x3Container(syncId, playerInventory, inventory) {
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
-            if (slot < inventory.invSize && slot != -999 && slot !in allowSlotIndex) {
+            if (slot < inventory.invSize && slot != -999 && slot !in allowUseSlot) {
                 if (action == QUICK_CRAFT) endQuickCraft()
                 return null
             }
@@ -210,7 +214,7 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
             return when (action) {
                 PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
                 QUICK_MOVE -> {
-                    if (slot in 0 until inventory.invSize && slot !in allowSlotIndex) return null
+                    if (slot in 0 until inventory.invSize && slot !in allowUseSlot) return null
 
                     var itemStack = ItemStack.EMPTY
                     val inventorySlot = slotList[slot]
@@ -280,7 +284,7 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
     private inner class HopperContainer(syncId: Int, playerInventory: PlayerInventory) :
         net.minecraft.container.HopperContainer(syncId, playerInventory, inventory) {
         override fun onSlotClick(slot: Int, button: Int, action: SlotActionType, player: PlayerEntity): ItemStack? {
-            if (slot < inventory.invSize && slot != -999 && slot !in allowSlotIndex) {
+            if (slot < inventory.invSize && slot != -999 && slot !in allowUseSlot) {
                 if (action == QUICK_CRAFT) endQuickCraft()
                 return null
             }
@@ -288,7 +292,7 @@ class GUI private constructor(private val type: ContainerType<out Container>, si
             return when (action) {
                 PICKUP, SWAP, CLONE, THROW, QUICK_CRAFT -> super.onSlotClick(slot, button, action, player)
                 QUICK_MOVE -> {
-                    if (slot in 0 until inventory.invSize && slot !in allowSlotIndex) return null
+                    if (slot in 0 until inventory.invSize && slot !in allowUseSlot) return null
 
                     var itemStack = ItemStack.EMPTY
                     val inventorySlot = slotList[slot]

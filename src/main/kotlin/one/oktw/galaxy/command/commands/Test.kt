@@ -24,11 +24,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.sync.Mutex
 import net.minecraft.container.ContainerType
+import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.text.LiteralText
 import one.oktw.galaxy.command.Command
 import one.oktw.galaxy.gui.GUI
+import org.apache.logging.log4j.LogManager
 import java.util.concurrent.ConcurrentHashMap
 
 class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + SupervisorJob()) {
@@ -44,7 +48,18 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
     }
 
     private fun execute(source: ServerCommandSource): Int {
-        val gui = GUI.Builder(ContainerType.GENERIC_9X1).build()
+        val gui = GUI(ContainerType.GENERIC_9X1, LiteralText("Test"))
+
+        gui.addBinding(0) { _: GUI, item: ItemStack ->
+            LogManager.getLogger().info(item)
+            gui.editInventory {
+                set(1, ItemStack(Items.STICK))
+            }
+        }
+
+        gui.editInventory {
+            set(0, ItemStack(Items.STICK))
+        }
 
         source.player.openContainer(gui)
 
