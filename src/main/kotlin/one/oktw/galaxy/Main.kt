@@ -37,6 +37,7 @@ import one.oktw.galaxy.command.commands.Admin
 import one.oktw.galaxy.command.commands.Home
 import one.oktw.galaxy.command.commands.Join
 import one.oktw.galaxy.command.commands.Spawn
+import one.oktw.galaxy.command.commands.Test
 import one.oktw.galaxy.event.EventManager
 import one.oktw.galaxy.event.type.ProxyResponseEvent
 import one.oktw.galaxy.mixin.interfaces.CustomRecipeManager
@@ -70,7 +71,7 @@ class Main : DedicatedServerModInitializer {
         main = this
 
         CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher, _ ->
-            listOf(Join(), Admin(), Home(), Spawn()).forEach { dispatcher.let(it::register) }
+            listOf(Join(), Admin(), Home(), Spawn(), Test()).forEach { dispatcher.let(it::register) }
         })
 
         // Recipe
