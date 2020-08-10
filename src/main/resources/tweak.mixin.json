@@ -5,6 +5,7 @@
   "mixins": [
     "MixinAsyncChunk_StorageIoWorker",
     "MixinAsyncChunk_ThreadedAnvilChunkStorage",
+    "MixinGUI_ServerPlayNetworkHandler",
     "MixinItemStackEqualAllowNull_ItemStack",
     "MixinMapExistingChunk_FilledMapItem",
     "MixinOneSpawnChunk_MinecraftServer",
