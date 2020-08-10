@@ -53,6 +53,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
         gui.addBinding(0..8, 0..5) {
             LogManager.getLogger().info(item)
             gui.editInventory {
+                source.player.sendMessage(LiteralText("Action: $action"), false)
                 if (item.isEmpty) set(x, y, ItemStack(Items.STICK)) else set(x, y, ItemStack.EMPTY)
             }
         }
