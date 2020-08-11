@@ -19,17 +19,16 @@
 package one.oktw.galaxy.command.commands
 
 import com.mojang.brigadier.CommandDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import net.minecraft.item.ItemStack
-import net.minecraft.item.Items
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.server.command.CommandManager
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.LiteralText
 import one.oktw.galaxy.command.Command
 import one.oktw.galaxy.gui.GUI
+import one.oktw.galaxy.item.Gui
+import one.oktw.galaxy.item.type.GuiType
 import org.apache.logging.log4j.LogManager
 
 class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + SupervisorJob()) {
@@ -49,15 +48,71 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
             LogManager.getLogger().info(item)
             gui.editInventory {
                 source.player.sendMessage(LiteralText("Action: $action"), false)
-                if (item.isEmpty) set(x, y, ItemStack(Items.STICK)) else set(x, y, ItemStack.EMPTY)
+//                if (item.isEmpty) set(x, y, ItemStack(Items.STICK)) else set(x, y, ItemStack.EMPTY)
             }
         }
 
-        gui.setAllowUse(0, 0, true)
+        for (x in 1..7) for (y in 1..4) gui.setAllowUse(x, y, true)
 
-        gui.editInventory {
-            set(0, ItemStack(Items.STICK))
+        launch {
+            while (!source.player.isDisconnected) {
+                for (x in 0..8) {
+                    gui.editInventory { set(x, 0, Gui(GuiType.values().random()).createItemStack()) }
+                    delay(100)
+                }
+
+                for (x in 0..8) {
+                    gui.editInventory { set(x, 0, ItemStack.EMPTY) }
+                    delay(100)
+                }
+            }
         }
+
+        launch {
+            while (!source.player.isDisconnected) {
+                for (x in 8 downTo 0) {
+                    gui.editInventory { set(x, 5, Gui(GuiType.values().random()).createItemStack()) }
+                    delay(100)
+                }
+
+                for (x in 8 downTo 0) {
+                    gui.editInventory { set(x, 5, ItemStack.EMPTY) }
+                    delay(100)
+                }
+            }
+        }
+
+        launch {
+            while (!source.player.isDisconnected) {
+                for (y in 1..4) {
+                    gui.editInventory { set(0, y, Gui(GuiType.values().random()).createItemStack()) }
+                    delay(100)
+                }
+
+                for (y in 1..4) {
+                    gui.editInventory { set(0, y, ItemStack.EMPTY) }
+                    delay(100)
+                }
+            }
+        }
+
+        launch {
+            while (!source.player.isDisconnected) {
+                for (y in 4 downTo 1) {
+                    gui.editInventory { set(8, y, Gui(GuiType.values().random()).createItemStack()) }
+                    delay(100)
+                }
+
+                for (y in 4 downTo 1) {
+                    gui.editInventory { set(8, y, ItemStack.EMPTY) }
+                    delay(100)
+                }
+            }
+        }
+
+//        gui.editInventory {
+//            set(0, ItemStack(Items.STICK))
+//        }
 
         source.player.openHandledScreen(gui)
 
