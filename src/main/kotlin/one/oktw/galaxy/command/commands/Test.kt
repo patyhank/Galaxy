@@ -27,6 +27,7 @@ import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.LiteralText
 import one.oktw.galaxy.command.Command
 import one.oktw.galaxy.gui.GUI
+import one.oktw.galaxy.gui.GUISBackStackManager
 import one.oktw.galaxy.item.Gui
 import one.oktw.galaxy.item.type.GuiType
 import org.apache.logging.log4j.LogManager
@@ -43,6 +44,11 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
 
     private fun execute(source: ServerCommandSource): Int {
         val gui = GUI(ScreenHandlerType.GENERIC_9X6, LiteralText("Test"))
+        val gui2 = GUI(ScreenHandlerType.GENERIC_9X1, LiteralText.EMPTY)
+
+        gui2.editInventory {
+            fillAll(Gui(GuiType.BLANK).createItemStack())
+        }
 
         gui.addBinding(0..8, 0..5) {
             LogManager.getLogger().info(item)
@@ -54,10 +60,15 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
 
         for (x in 1..7) for (y in 1..4) gui.setAllowUse(x, y, true)
 
+        gui.setAllowUse(1, 1, false)
+        gui.addBinding(1, 1) {
+            GUISBackStackManager.openGUI(source.player, gui2)
+        }
+
         launch {
             while (!source.player.isDisconnected) {
                 for (x in 0..8) {
-                    gui.editInventory { set(x, 0, Gui(GuiType.values().random()).createItemStack()) }
+                    gui.editInventory { set(x, 0, Gui(GuiType.INFO).createItemStack()) }
                     delay(100)
                 }
 
@@ -71,7 +82,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
         launch {
             while (!source.player.isDisconnected) {
                 for (x in 8 downTo 0) {
-                    gui.editInventory { set(x, 5, Gui(GuiType.values().random()).createItemStack()) }
+                    gui.editInventory { set(x, 5, Gui(GuiType.INFO).createItemStack()) }
                     delay(100)
                 }
 
@@ -85,7 +96,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
         launch {
             while (!source.player.isDisconnected) {
                 for (y in 1..4) {
-                    gui.editInventory { set(0, y, Gui(GuiType.values().random()).createItemStack()) }
+                    gui.editInventory { set(0, y, Gui(GuiType.INFO).createItemStack()) }
                     delay(100)
                 }
 
@@ -99,7 +110,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
         launch {
             while (!source.player.isDisconnected) {
                 for (y in 4 downTo 1) {
-                    gui.editInventory { set(8, y, Gui(GuiType.values().random()).createItemStack()) }
+                    gui.editInventory { set(8, y, Gui(GuiType.INFO).createItemStack()) }
                     delay(100)
                 }
 
@@ -114,7 +125,7 @@ class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + Sup
 //            set(0, ItemStack(Items.STICK))
 //        }
 
-        source.player.openHandledScreen(gui)
+        GUISBackStackManager.openGUI(source.player, gui)
 
         return com.mojang.brigadier.Command.SINGLE_SUCCESS
     }
