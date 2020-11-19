@@ -3,6 +3,7 @@
   "package": "one.oktw.galaxy.mixin.tweak",
   "compatibilityLevel": "JAVA_14",
   "mixins": [
+    "BeeToBalloon",
     "MixinAsyncChunk_StorageIoWorker",
     "MixinAsyncChunk_ThreadedAnvilChunkStorage",
     "MixinOneSpawnChunk_MinecraftServer",
