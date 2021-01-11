@@ -32,10 +32,10 @@ import one.oktw.galaxy.item.Gui
 import one.oktw.galaxy.item.type.GuiType
 import org.apache.logging.log4j.LogManager
 
-class Test : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + SupervisorJob()) {
+class TestGUI : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + SupervisorJob()) {
     override fun register(dispatcher: CommandDispatcher<ServerCommandSource>) {
         dispatcher.register(
-            CommandManager.literal("test")
+            CommandManager.literal("gui")
                 .executes { context ->
                     execute(context.source)
                 }
