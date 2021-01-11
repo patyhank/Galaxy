@@ -1,6 +1,6 @@
 /*
  * OKTW Galaxy Project
- * Copyright (C) 2018-2020
+ * Copyright (C) 2018-2021
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -18,7 +18,9 @@
 
 package one.oktw.galaxy.command.commands
 
+import com.mojang.brigadier.Command.SINGLE_SUCCESS
 import com.mojang.brigadier.CommandDispatcher
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import kotlinx.coroutines.*
 import net.minecraft.item.ItemStack
 import net.minecraft.screen.ScreenHandlerType
@@ -39,6 +41,31 @@ class TestGUI : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + 
                 .executes { context ->
                     execute(context.source)
                 }
+                .then(
+                    CommandManager.argument("row", IntegerArgumentType.integer(1, 6))
+                        .suggests { _, builder ->
+                            for (i in 1..6) builder.suggest(i)
+                            builder.buildFuture()
+                        }
+                        .executes {
+                            val row = IntegerArgumentType.getInteger(it, "row")
+                            val gui = when (row) {
+                                1 -> GUI(ScreenHandlerType.GENERIC_9X1, LiteralText.EMPTY)
+                                2 -> GUI(ScreenHandlerType.GENERIC_9X2, LiteralText.EMPTY)
+                                3 -> GUI(ScreenHandlerType.GENERIC_9X3, LiteralText.EMPTY)
+                                4 -> GUI(ScreenHandlerType.GENERIC_9X4, LiteralText.EMPTY)
+                                5 -> GUI(ScreenHandlerType.GENERIC_9X5, LiteralText.EMPTY)
+                                6 -> GUI(ScreenHandlerType.GENERIC_9X6, LiteralText.EMPTY)
+                                else -> return@executes SINGLE_SUCCESS
+                            }
+
+                            for (x in 0..8) for (y in 0 until row) gui.setAllowUse(x, y, true)
+
+                            GUISBackStackManager.openGUI(it.source.player, gui)
+
+                            return@executes SINGLE_SUCCESS
+                        }
+                )
         )
     }
 
