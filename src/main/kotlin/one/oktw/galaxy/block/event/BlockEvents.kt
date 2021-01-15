@@ -1,6 +1,6 @@
 /*
  * OKTW Galaxy Project
- * Copyright (C) 2018-2020
+ * Copyright (C) 2018-2021
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -24,6 +24,7 @@ import net.minecraft.item.ItemPlacementContext
 import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket
+import net.minecraft.screen.NamedScreenHandlerFactory
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.LiteralText
@@ -104,7 +105,7 @@ class BlockEvents {
         if (!event.player.shouldCancelInteraction()) {
             val blockType = CustomBlockUtil.getTypeFromCustomBlockEntity(entity) ?: return
             if (blockType.hasGUI && event.packet.hand == Hand.MAIN_HAND) {
-                openGUI(blockType, event.player)
+//                openGUI(blockType, event.player, event)
                 event.player.swingHand(Hand.MAIN_HAND, true)
                 usedLock.add(event.player)
             }
@@ -148,17 +149,17 @@ class BlockEvents {
         if (!player.shouldCancelInteraction()) {
             val entity = CustomBlockUtil.getCustomBlockEntity(world, position) ?: return false
             val blockType = CustomBlockUtil.getTypeFromCustomBlockEntity(entity) ?: return false
-            if (blockType.hasGUI && hand == Hand.MAIN_HAND) openGUI(blockType, player)
+            if (blockType.hasGUI && hand == Hand.MAIN_HAND) openGUI(blockType, player, event)
             return blockType.hasGUI
         }
         return false
     }
 
-    private fun openGUI(blockType: BlockType, player: ServerPlayerEntity) {
+    private fun openGUI(blockType: BlockType, player: ServerPlayerEntity, event: PlayerInteractBlockEvent) {
         when (blockType) { // TODO activate GUI
             BlockType.CONTROL_PANEL -> player.sendMessage(LiteralText("Control Panel"), false)
             BlockType.PLANET_TERMINAL -> player.sendMessage(LiteralText("Planet Terminal"), false)
-            BlockType.HT_CRAFTING_TABLE -> player.sendMessage(LiteralText("HTCT"), false)
+            BlockType.HT_CRAFTING_TABLE -> player.openHandledScreen(player.world.getBlockEntity(event.packet.blockHitResult.blockPos) as NamedScreenHandlerFactory)
             BlockType.TELEPORTER_CORE_BASIC -> player.sendMessage(LiteralText("Basic Teleporter"), false)
             BlockType.TELEPORTER_CORE_ADVANCE -> player.sendMessage(LiteralText("Advanced Teleporter"), false)
             else -> Unit

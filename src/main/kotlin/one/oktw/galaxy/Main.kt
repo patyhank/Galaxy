@@ -29,6 +29,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.recipe.RecipeType
 import net.minecraft.server.dedicated.MinecraftDedicatedServer
 import net.minecraft.util.Identifier
+import one.oktw.galaxy.block.entity.BlockEntityTypes
 import one.oktw.galaxy.block.event.AngelBlock
 import one.oktw.galaxy.block.event.BlockEvents
 import one.oktw.galaxy.block.event.Elevator
@@ -72,6 +73,9 @@ class Main : DedicatedServerModInitializer {
 
         // Recipe
         CustomRecipeManager.addRecipe(RecipeType.CRAFTING, one.oktw.galaxy.recipe.tools.Wrench())
+
+        // Block entity
+        BlockEntityTypes // Init
 
         ServerLifecycleEvents.SERVER_STARTING.register(ServerLifecycleEvents.ServerStarting {
             server = it as MinecraftDedicatedServer

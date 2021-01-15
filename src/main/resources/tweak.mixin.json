@@ -5,6 +5,7 @@
   "mixins": [
     "MixinAsyncChunk_StorageIoWorker",
     "MixinAsyncChunk_ThreadedAnvilChunkStorage",
+    "MixinCustomBlockEntity_BarrierBlock",
     "MixinGUI_ServerPlayNetworkHandler",
     "MixinItemStackEqualAllowNull_ItemStack",
     "MixinMapExistingChunk_FilledMapItem",
