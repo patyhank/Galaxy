@@ -30,4 +30,11 @@ object BlockEntityTypes {
         BlockEntityType.Builder.create({ TestBlockEntity() }, Blocks.BARRIER)
             .build(null) // TODO Add DataFixer
     )
+
+    val Test2: BlockEntityType<TestBlockEntity2> = Registry.register(
+        Registry.BLOCK_ENTITY_TYPE,
+        Identifier("galaxy", "test_block2"),
+        BlockEntityType.Builder.create({ TestBlockEntity2() }, Blocks.BARRIER)
+            .build(null) // TODO Add DataFixer
+    )
 }

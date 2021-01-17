@@ -30,11 +30,13 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.LiteralText
 import net.minecraft.util.Hand
 import one.oktw.galaxy.block.Block
+import one.oktw.galaxy.block.entity.BlockWithGUI
 import one.oktw.galaxy.block.item.BlockItem
 import one.oktw.galaxy.block.type.BlockType
 import one.oktw.galaxy.block.util.CustomBlockUtil
 import one.oktw.galaxy.event.annotation.EventListener
 import one.oktw.galaxy.event.type.*
+import one.oktw.galaxy.gui.GUISBackStackManager
 import one.oktw.galaxy.item.Tool
 import one.oktw.galaxy.item.type.ItemType
 import one.oktw.galaxy.item.type.ToolType
@@ -75,7 +77,9 @@ class BlockEvents {
         val item = event.context.stack
         val player = event.context.player as ServerPlayerEntity
         if (item.item == BlockItem().baseItem) {
-            if (player.isCreativeLevelTwoOp) return
+            if (player.isCreativeLevelTwoOp) {
+                event.cancel = true
+            }
             if (tryPlaceBlock(event.context)) {
                 player.swingHand(event.context.hand, true)
                 usedLock.add(player)
@@ -96,20 +100,6 @@ class BlockEvents {
     @EventListener(true)
     fun onPlayerInteractItem(event: PlayerInteractItemEvent) {
         if (usedLock.contains(event.player)) event.cancel = true
-    }
-
-    @EventListener(true)
-    fun onInteractEntity(event: PlayerInteractEntityEvent) {
-        if (usedLock.contains(event.player)) return
-        val entity = event.packet.getEntity(event.player.serverWorld) ?: return
-        if (!event.player.shouldCancelInteraction()) {
-            val blockType = CustomBlockUtil.getTypeFromCustomBlockEntity(entity) ?: return
-            if (blockType.hasGUI && event.packet.hand == Hand.MAIN_HAND) {
-//                openGUI(blockType, event.player, event)
-                event.player.swingHand(Hand.MAIN_HAND, true)
-                usedLock.add(event.player)
-            }
-        }
     }
 
     @EventListener(true)
@@ -149,21 +139,20 @@ class BlockEvents {
         if (!player.shouldCancelInteraction()) {
             val entity = CustomBlockUtil.getCustomBlockEntity(world, position) ?: return false
             val blockType = CustomBlockUtil.getTypeFromCustomBlockEntity(entity) ?: return false
-            if (blockType.hasGUI && hand == Hand.MAIN_HAND) openGUI(blockType, player, event)
+            if (blockType.hasGUI && hand == Hand.MAIN_HAND) when (blockType) { // TODO activate GUI
+                BlockType.CONTROL_PANEL -> player.sendMessage(LiteralText("Control Panel"), false)
+                BlockType.PLANET_TERMINAL -> player.sendMessage(LiteralText("Planet Terminal"), false)
+                BlockType.HT_CRAFTING_TABLE -> player.openHandledScreen(player.world.getBlockEntity(event.packet.blockHitResult.blockPos) as NamedScreenHandlerFactory)
+                BlockType.TELEPORTER_CORE_BASIC -> GUISBackStackManager.openGUI(
+                    player,
+                    (player.world.getBlockEntity(event.packet.blockHitResult.blockPos) as BlockWithGUI).getGUI()
+                )
+                BlockType.TELEPORTER_CORE_ADVANCE -> player.sendMessage(LiteralText("Advanced Teleporter"), false)
+                else -> Unit
+            }
             return blockType.hasGUI
         }
         return false
-    }
-
-    private fun openGUI(blockType: BlockType, player: ServerPlayerEntity, event: PlayerInteractBlockEvent) {
-        when (blockType) { // TODO activate GUI
-            BlockType.CONTROL_PANEL -> player.sendMessage(LiteralText("Control Panel"), false)
-            BlockType.PLANET_TERMINAL -> player.sendMessage(LiteralText("Planet Terminal"), false)
-            BlockType.HT_CRAFTING_TABLE -> player.openHandledScreen(player.world.getBlockEntity(event.packet.blockHitResult.blockPos) as NamedScreenHandlerFactory)
-            BlockType.TELEPORTER_CORE_BASIC -> player.sendMessage(LiteralText("Basic Teleporter"), false)
-            BlockType.TELEPORTER_CORE_ADVANCE -> player.sendMessage(LiteralText("Advanced Teleporter"), false)
-            else -> Unit
-        }
     }
 
     private fun tryPlaceBlock(context: ItemUsageContext): Boolean {

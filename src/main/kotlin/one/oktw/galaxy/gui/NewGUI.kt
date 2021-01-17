@@ -50,6 +50,11 @@ class NewGUI(syncId: Int, private val inventory: Inventory, private val playerIn
         return super.onSlotClick(index, button, actionType, playerEntity)
     }
 
+    override fun close(player: PlayerEntity?) {
+        super.close(player)
+        inventory.onClose(player)
+    }
+
     private fun addSlot(inventory: Inventory, index: Int) {
         addSlot(Slot(inventory, index, 0, 0))
     }

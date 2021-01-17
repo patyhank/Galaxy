@@ -59,7 +59,7 @@ class TestGUI : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + 
                                 else -> return@executes SINGLE_SUCCESS
                             }
 
-                            for (x in 0..8) for (y in 0 until row) gui.setAllowUse(x, y, true)
+//                            for (x in 0..8) for (y in 0 until row) gui.setAllowUse(x, y, true)
 
                             GUISBackStackManager.openGUI(it.source.player, gui)
 
@@ -85,9 +85,9 @@ class TestGUI : Command, CoroutineScope by CoroutineScope(Dispatchers.Default + 
             }
         }
 
-        for (x in 1..7) for (y in 1..4) gui.setAllowUse(x, y, true)
+//        for (x in 1..7) for (y in 1..4) gui.setAllowUse(x, y, true)
 
-        gui.setAllowUse(1, 1, false)
+//        gui.setAllowUse(1, 1, false)
         gui.addBinding(1, 1) {
             GUISBackStackManager.openGUI(source.player, gui2)
         }

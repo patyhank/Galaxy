@@ -1,6 +1,6 @@
 /*
  * OKTW Galaxy Project
- * Copyright (C) 2018-2020
+ * Copyright (C) 2018-2021
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -32,6 +32,8 @@ import net.minecraft.sound.SoundEvents
 import net.minecraft.util.ActionResult
 import net.minecraft.util.math.BlockPos
 import one.oktw.galaxy.block.Block
+import one.oktw.galaxy.block.entity.TestBlockEntity
+import one.oktw.galaxy.block.entity.TestBlockEntity2
 import one.oktw.galaxy.block.type.BlockType
 import net.minecraft.block.Block as minecraftBlock
 
@@ -40,6 +42,11 @@ object CustomBlockUtil {
         val world = context.world as ServerWorld
         val blockPos = context.blockPos
         val placeResult = (BARRIER as BlockItem).place(context)
+        when (blockType) {
+            BlockType.HT_CRAFTING_TABLE -> world.setBlockEntity(blockPos, TestBlockEntity())
+            BlockType.TELEPORTER_CORE_BASIC -> world.setBlockEntity(blockPos, TestBlockEntity2())
+            else -> Unit
+        }
         if (placeResult == ActionResult.SUCCESS || placeResult == ActionResult.CONSUME) {
             CustomBlockEntityBuilder()
                 .setBlockItem(blockItem)

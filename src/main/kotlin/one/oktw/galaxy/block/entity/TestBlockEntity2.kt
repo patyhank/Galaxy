@@ -16,8 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package one.oktw.galaxy.event.type
+package one.oktw.galaxy.block.entity
 
-import net.minecraft.item.ItemUsageContext
+import net.minecraft.block.entity.BlockEntity
+import net.minecraft.screen.ScreenHandlerType
+import net.minecraft.text.LiteralText
+import one.oktw.galaxy.gui.GUI
 
-class PlayerUseItemOnBlock(val context: ItemUsageContext) : CancelableEvent()
+class TestBlockEntity2 : BlockEntity(BlockEntityTypes.Test2), BlockWithGUI {
+    private val gui = GUI(ScreenHandlerType.GENERIC_9X6, LiteralText.EMPTY)
+    override fun getGUI() = gui
+}
