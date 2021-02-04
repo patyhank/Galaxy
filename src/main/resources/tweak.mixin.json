@@ -5,6 +5,7 @@
   "mixins": [
     "MixinAsyncChunk_StorageIoWorker",
     "MixinAsyncChunk_ThreadedAnvilChunkStorage",
+    "MixinCustomItemEnchant_AnvilScreenHandler",
     "MixinCustomItemEnchant_EnchantmentScreenHandler",
     "MixinMapExistingChunk_FilledMapItem",
     "MixinOneSpawnChunk_MinecraftServer",
